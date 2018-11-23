@@ -5,6 +5,8 @@ VisualStudioVersion = 15.0.28010.2046
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MIDIIOCSWrapper", "MIDIIOCSWrapper\MIDIIOCSWrapper.csproj", "{84003517-F745-4579-A629-D8F556FE2274}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "テストアプリ", "テストアプリ\テストアプリ.csproj", "{E1207BBE-9901-4B14-B965-3DCEC431FA90}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{84003517-F745-4579-A629-D8F556FE2274}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{84003517-F745-4579-A629-D8F556FE2274}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{84003517-F745-4579-A629-D8F556FE2274}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E1207BBE-9901-4B14-B965-3DCEC431FA90}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E1207BBE-9901-4B14-B965-3DCEC431FA90}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E1207BBE-9901-4B14-B965-3DCEC431FA90}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E1207BBE-9901-4B14-B965-3DCEC431FA90}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
