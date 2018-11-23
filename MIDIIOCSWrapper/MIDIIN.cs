@@ -4,6 +4,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
+using ThumbnailExtraction;
 
 namespace MIDIIOCSWrapper
 {
@@ -52,7 +53,121 @@ namespace MIDIIOCSWrapper
         [DllImport("MIDIIO.dll")]
         extern static int MIDIIn_GetDeviceName(int Index, StringBuilder DeviceName, int Len);
 
+        /// <summary>
+        /// MIDI入力デバイスを開く。
+        /// この関数は、安全にMIDI入力デバイスをオープンし、
+        /// MIDI入力デバイスに必要なメモリを適切な順序で確保する。
+        /// MIDI入力デバイス名としては、MIDIIn_GetDeviceName関数で取得したものを使う。
+        /// MIDI入力デバイスが開けなかった場合はNULLを返す。
+        /// MIDI入力デバイスが開けない主な理由は、他のアプリケーションが既に指定のMIDI入力デバイスを使っている、
+        /// 他のアプリケーションが指定のMIDI入力デバイスを閉じ忘れている、
+        /// MIDI入力デバイス名が間違えている(例えば名前の後に見えない'\n'や'\r'が付いている)、
+        /// インストールされているMIDI入力デバイス(ドライバ)が古すぎる(例えばWindows3.1用のだったりする)などが考えられる。
+        /// どうしても開けない場合は、Windowsを再起動する、ドライバを最新のものにインストールし直すなどが考えられる。
+        /// </summary>
+        /// <param name="DeviceName">MIDI入力デバイス名</param>
+        /// <returns>
+        /// 正常終了:MIDI入力デバイスオブジェクトへのポインタ
+        /// 異常終了:NULL
+        /// </returns>
+        [DllImport("MIDIIO.dll")]
+        extern static IntPtr MIDIIn_Open(string DeviceName);
+
+        /// <summary>
+        /// 現在使用しているMIDI入力デバイスを閉じ、新しいMIDI入力デバイスを開く。
+        /// この関数は、単純にMIDIIn_Close (pMIDIIn)とMIDIIn_Open (pszDeviceName)をするだけのものである。
+        /// 新しいMIDI入力デバイス名としては、MIDIIn_GetDeviceName関数で取得したものを使う。
+        /// 新しいMIDI入力デバイスが開けなかった場合はNULLを返す。
+        /// また、使用中のMIDI入力デバイスを閉じる際にエラーが発生した場合、
+        /// 新しいMIDI入力デバイスは開かずにNULLを返す。
+        /// </summary>
+        /// <param name="pMIDIIn">現在使用しているMIDI入力デバイスオブジェクトへのポインタ</param>
+        /// <param name="pszDeviceName">新しいMIDI入力デバイス名</param>
+        /// <returns>
+        /// 正常終了:新しいMIDI入力デバイスオブジェクトへのポインタ
+        /// 異常終了:NULL
+        /// </returns>
+        [DllImport("MIDIIO.dll")]
+        extern static IntPtr MIDIIn_Reopen(IntPtr pMIDIIn, string pszDeviceName);
+
+        /// <summary>
+        /// MIDI入力デバイスを閉じる。
+        /// この関数は、MIDI入力デバイスが確保したメモリを適切な順序で解放し、
+        /// 安全にMIDI入力デバイスをクローズする。
+        /// この関数は通常1を返すが、エラーが発生した場合0を返す。
+        /// MIDIIn_Closeに失敗したMIDI入力デバイスは、
+        /// もはや使用するべきでない。
+        /// pMIDIInにNULLを渡した場合は何も起こらず1を返す。
+        /// </summary>
+        /// <param name="pMIDIIn">MIDI入力デバイスオブジェクトへのポインタ</param>
+        /// <returns>
+        /// 正常終了:1
+        /// 異常終了:0
+        /// </returns>
+        [DllImport("MIDIIO.dll")]
+        extern static int MIDIIn_Close(IntPtr pMIDIIn);
+
+        /// <summary>
+        /// MIDI入力デバイスをリセットし、MIDI入力デバイスを開いた直後の状態に初期化する。
+        /// 具体的には、入力バッファにたまっているMIDIメッセージをすべて削除し、
+        /// 読み込み位置と書き込み位置を0に初期化する。
+        /// </summary>
+        /// <param name="pMIDIIn">MIDI入力デバイスオブジェクトへのポインタ</param>
+        /// <returns>
+        /// 正常終了:1
+        /// 異常終了:0
+        /// </returns>
+        [DllImport("MIDIIO.dll")]
+        extern static int MIDIIn_Reset(IntPtr pMIDIIn);
+
+        /// <summary>
+        /// MIDIメッセージをひとつ取得し、実際に取得したMIDIメッセージのバイト数を返す。
+        /// 取得するMIDIメッセージがなかった場合は直ちに0を返す(MIDIメッセージの待機は行わない)。
+        /// MIDIメッセージが複数個蓄積されている場合があるので、この関数が0を返すまでループ内で繰り返しこの関数を使う必要がある。
+        /// この関数は、通常のMIDIチャンネルメッセージのほか、
+        /// システムエクスクルーシヴメッセージ・システムリアルタイムメッセージをも取得しうる。
+        /// そのため、lLenは256バイト用意しておくべきである。
+        /// もしpMessageにMIDIメッセージが入りきれなかった場合、
+        /// 入りきれなかった部分のMIDIメッセージは切り捨てられ、二度と取得できなくなる。
+        /// </summary>
+        /// <param name="pMIDIIn">MIDI入力デバイスへのポインタ</param>
+        /// <param name="pMessage">取得するMIDIメッセージを格納するバッファへのポインタ</param>
+        /// <param name="lLen">バッファの長さ[バイト]かつ取得するMIDIメッセージの最大バイト数</param>
+        /// <returns></returns>
+        [DllImport("MIDIIO.dll")]
+        extern static int MIDIIn_GetMIDIMessage(IntPtr pMIDIIn, IntPtr pMessage,int lLen);
+
+        /// <summary>
+        /// このMIDI入力デバイスの名前を調べる。
+        /// pMIDIInは既に開かれているデバイスでなければならない。
+        /// なお、MIDI入力デバイスの名前は通常32文字以下(ヌル文字含む)であるので、
+        /// バッファとしては32文字のTCHAR型配列を用意しておけば十分である。
+        /// この関数は現在使用しているデバイス名をINIファイルなどに保存しておくのに便利である。
+        /// </summary>
+        /// <param name="pMIDIIn">MIDI入力デバイスへのポインタ</param>
+        /// <param name="pszDeviceName">MIDI入力デバイス名を格納するバッファへのポインタ</param>
+        /// <param name="lLen">MIDI入力デバイス名を格納するバッファの長さ[文字]</param>
+        /// <returns>
+        /// 正常終了:このMIDI入力デバイス名の文字数[文字]
+        /// 異常終了:0
+        /// </returns>
+        [DllImport("MIDIIO.dll")]
+        extern static int MIDIIn_GetThisDeviceName(IntPtr pMIDIIn, StringBuilder pszDeviceName, int lLen);
+
         #endregion
+
+        /// <summary>
+        /// 指定の名前のMIDIデバイスを開きオブジェクトを初期化します。
+        /// </summary>
+        public MIDIIN(string deviceName)
+        {
+            Open(deviceName);
+        }
+
+        /// <summary>
+        /// MIDI入力デバイスオブジェクト
+        /// </summary>
+        private IntPtr MIDIInDevice;
 
         /// <summary>
         /// インストールされているMIDI入力デバイスの数を調べる。MIDI入力デバイスが何もインストールされていない場合0を返す。
@@ -73,6 +188,10 @@ namespace MIDIIOCSWrapper
         /// <returns>デバイス名</returns>
         public static string GetDeviceName(int index)
         {
+            if (index >= GetDeviceNum())
+            {
+                throw new IndexOutOfRangeException();
+            }
             StringBuilder deviceName = new StringBuilder(256);
             int res = MIDIIn_GetDeviceName(index, deviceName, deviceName.Capacity);
             if(res == 0)
@@ -81,5 +200,81 @@ namespace MIDIIOCSWrapper
             }
             return deviceName.ToString();
         }
+
+        /// <summary>
+        /// MIDI入力デバイスを開きます。
+        /// </summary>
+        /// <param name="deviceName">MIDI入力デバイス名</param>
+        public void Open(string deviceName)
+        {
+            if (!MIDIInDevice.IsZero())
+            {
+                throw new Exception("MIDIデバイスはすでに開かれています。");
+            }
+
+            MIDIInDevice = MIDIIn_Open(deviceName);
+            if (MIDIInDevice.IsZero())
+            {
+                throw new Exception("MIDIデバイスが開けませんでした。\n他のアプリケーションを終了してから再試行してください。");
+            }
+        }
+
+        /// <summary>
+        /// 現在使用しているMIDI入力デバイスを閉じ、新しいMIDI入力デバイスを開きます。
+        /// </summary>
+        /// <param name="deviceName">MIDI入力デバイス名</param>
+        public void Reopen(string deviceName)
+        {
+            if (MIDIInDevice.IsZero())
+            {
+                throw new Exception("MIDIデバイスが開かれていません。");
+            }
+
+            MIDIInDevice = MIDIIn_Reopen(MIDIInDevice, deviceName);
+            if (MIDIInDevice.IsZero())
+            {
+                throw new Exception("MIDIデバイスが閉じられなかったか、開けませんでした。");
+            }
+        }
+
+        /// <summary>
+        /// MIDI入力デバイスを閉じます。
+        /// </summary>
+        public void Close()
+        {
+            //開かれていない場合、何もしない。
+            if (MIDIInDevice.IsZero())
+            {
+                return;
+            }
+
+            int res = MIDIIn_Close(MIDIInDevice);
+            if (res == 0)
+            {
+                throw new Exception("MIDIデバイスのクローズに失敗しました。このデバイスはもはや使用するべきでない。");
+            }
+        }
+
+
+    }
+}
+
+namespace ThumbnailExtraction
+{
+    internal static class SystemExtension
+    {
+        #region IntPtr
+
+        /// <summary>
+        /// ゼロかどうかを示す値を取得します。
+        /// </summary>
+        /// <param name="self"><see cref="System.IntPtr"/> のインスタンス。</param>
+        /// <returns>ゼロの場合はtrue。それ以外の場合はfalse。</returns>
+        public static bool IsZero(this IntPtr self)
+        {
+            return self == IntPtr.Zero;
+        }
+
+        #endregion IntPtr
     }
 }
