@@ -1,16 +1,12 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading.Tasks;
-using ThumbnailExtraction;
 
 namespace MIDIIOCSWrapper
 {
     // MIDI構造体
     [StructLayout(LayoutKind.Sequential)]
-    struct MIDI
+    internal struct MIDI
     {
         public IntPtr m_pDeviceHandle;
         public IntPtr m_pDeviceName;
@@ -28,18 +24,19 @@ namespace MIDIIOCSWrapper
     public class MIDIIN
     {
         #region DLLインポート
+
         /// <summary>
         /// インストールされているMIDI入力デバイスの数を調べる。MIDI入力デバイスが何もインストールされていない場合0を返す。
         /// </summary>
         /// <returns>インストールされているMIDI入力デバイスの数</returns>
         [DllImport("MIDIIO.dll")]
-        extern static int MIDIIn_GetDeviceNum();
+        private static extern int MIDIIn_GetDeviceNum();
 
         /// <summary>
         /// MIDI入力デバイスの名前を調べる。
         /// Indexには0以上、MIDIIn_GetDeviceNumで得られた値-1以下の値を指定すれば、
         /// 正常にMIDI入力デバイスの名前を取得することができる。
-        /// その他のインデックスを指定した場合、この関数は失敗し、0を返す。 
+        /// その他のインデックスを指定した場合、この関数は失敗し、0を返す。
         /// なお、MIDI入力デバイスの名前は通常32文字以下(ヌル文字含む)であるので、
         /// バッファとしては32文字のTCHAR型配列を用意しておけば十分である。
         /// </summary>
@@ -51,7 +48,7 @@ namespace MIDIIOCSWrapper
         /// 異常終了:0
         /// returns>
         [DllImport("MIDIIO.dll")]
-        extern static int MIDIIn_GetDeviceName(int Index, StringBuilder DeviceName, int Len);
+        private static extern int MIDIIn_GetDeviceName(int Index, StringBuilder DeviceName, int Len);
 
         /// <summary>
         /// MIDI入力デバイスを開く。
@@ -71,7 +68,7 @@ namespace MIDIIOCSWrapper
         /// 異常終了:NULL
         /// </returns>
         [DllImport("MIDIIO.dll")]
-        extern static IntPtr MIDIIn_Open(string DeviceName);
+        private static extern IntPtr MIDIIn_Open(string DeviceName);
 
         /// <summary>
         /// 現在使用しているMIDI入力デバイスを閉じ、新しいMIDI入力デバイスを開く。
@@ -88,7 +85,7 @@ namespace MIDIIOCSWrapper
         /// 異常終了:NULL
         /// </returns>
         [DllImport("MIDIIO.dll")]
-        extern static IntPtr MIDIIn_Reopen(IntPtr pMIDIIn, string pszDeviceName);
+        private static extern IntPtr MIDIIn_Reopen(IntPtr pMIDIIn, string pszDeviceName);
 
         /// <summary>
         /// MIDI入力デバイスを閉じる。
@@ -105,7 +102,7 @@ namespace MIDIIOCSWrapper
         /// 異常終了:0
         /// </returns>
         [DllImport("MIDIIO.dll")]
-        extern static int MIDIIn_Close(IntPtr pMIDIIn);
+        private static extern int MIDIIn_Close(IntPtr pMIDIIn);
 
         /// <summary>
         /// MIDI入力デバイスをリセットし、MIDI入力デバイスを開いた直後の状態に初期化する。
@@ -118,7 +115,7 @@ namespace MIDIIOCSWrapper
         /// 異常終了:0
         /// </returns>
         [DllImport("MIDIIO.dll")]
-        extern static int MIDIIn_Reset(IntPtr pMIDIIn);
+        private static extern int MIDIIn_Reset(IntPtr pMIDIIn);
 
         /// <summary>
         /// MIDIメッセージをひとつ取得し、実際に取得したMIDIメッセージのバイト数を返す。
@@ -133,9 +130,9 @@ namespace MIDIIOCSWrapper
         /// <param name="pMIDIIn">MIDI入力デバイスへのポインタ</param>
         /// <param name="pMessage">取得するMIDIメッセージを格納するバッファへのポインタ</param>
         /// <param name="lLen">バッファの長さ[バイト]かつ取得するMIDIメッセージの最大バイト数</param>
-        /// <returns></returns>
+        /// <returns>実際に取得したMIDIメッセージのバイト数</returns>
         [DllImport("MIDIIO.dll")]
-        extern static int MIDIIn_GetMIDIMessage(IntPtr pMIDIIn, IntPtr pMessage,int lLen);
+        private static extern int MIDIIn_GetMIDIMessage(IntPtr pMIDIIn, IntPtr pMessage, int lLen);
 
         /// <summary>
         /// このMIDI入力デバイスの名前を調べる。
@@ -152,9 +149,9 @@ namespace MIDIIOCSWrapper
         /// 異常終了:0
         /// </returns>
         [DllImport("MIDIIO.dll")]
-        extern static int MIDIIn_GetThisDeviceName(IntPtr pMIDIIn, StringBuilder pszDeviceName, int lLen);
+        private static extern int MIDIIn_GetThisDeviceName(IntPtr pMIDIIn, StringBuilder pszDeviceName, int lLen);
 
-        #endregion
+        #endregion DLLインポート
 
         /// <summary>
         /// 指定の名前のMIDIデバイスを開きオブジェクトを初期化します。
@@ -194,9 +191,9 @@ namespace MIDIIOCSWrapper
             }
             StringBuilder deviceName = new StringBuilder(256);
             int res = MIDIIn_GetDeviceName(index, deviceName, deviceName.Capacity);
-            if(res == 0)
+            if (res == 0)
             {
-                throw new Exception("MIDI入力デバイスの取得に失敗しました。");
+                throw new MIDIIOException("MIDI入力デバイスの取得に失敗しました。");
             }
             return deviceName.ToString();
         }
@@ -209,13 +206,13 @@ namespace MIDIIOCSWrapper
         {
             if (!MIDIInDevice.IsZero())
             {
-                throw new Exception("MIDIデバイスはすでに開かれています。");
+                throw new MIDIIOException("MIDIデバイスはすでに開かれています。");
             }
 
             MIDIInDevice = MIDIIn_Open(deviceName);
             if (MIDIInDevice.IsZero())
             {
-                throw new Exception("MIDIデバイスが開けませんでした。\n他のアプリケーションを終了してから再試行してください。");
+                throw new MIDIIOException("MIDIデバイスが開けませんでした。\n他のアプリケーションを終了してから再試行してください。");
             }
         }
 
@@ -227,13 +224,13 @@ namespace MIDIIOCSWrapper
         {
             if (MIDIInDevice.IsZero())
             {
-                throw new Exception("MIDIデバイスが開かれていません。");
+                throw new MIDIIOException("MIDIデバイスが開かれていません。");
             }
 
             MIDIInDevice = MIDIIn_Reopen(MIDIInDevice, deviceName);
             if (MIDIInDevice.IsZero())
             {
-                throw new Exception("MIDIデバイスが閉じられなかったか、開けませんでした。");
+                throw new MIDIIOException("MIDIデバイスが閉じられなかったか、開けませんでした。");
             }
         }
 
@@ -249,32 +246,64 @@ namespace MIDIIOCSWrapper
             }
 
             int res = MIDIIn_Close(MIDIInDevice);
+            MIDIInDevice = IntPtr.Zero;
             if (res == 0)
             {
-                throw new Exception("MIDIデバイスのクローズに失敗しました。このデバイスはもはや使用するべきでない。");
+                throw new MIDIIOException("MIDIデバイスのクローズに失敗しました。このデバイスはもはや使用するべきでない。");
+            }
+
+        }
+
+        /// <summary>
+        /// MIDI入力デバイスをリセットし、MIDI入力デバイスを開いた直後の状態に初期化する。
+        /// 具体的には、入力バッファにたまっているMIDIメッセージをすべて削除し、
+        /// 読み込み位置と書き込み位置を0に初期化する。
+        /// </summary>
+        public void Reset()
+        {
+            //開かれていない場合、何もしない。
+            if (MIDIInDevice.IsZero())
+            {
+                return;
+            }
+
+            int res = MIDIIn_Reset(MIDIInDevice);
+            if (res == 0)
+            {
+                throw new MIDIIOException("MIDIデバイスのリセットに失敗しました。");
             }
         }
 
-
-    }
-}
-
-namespace ThumbnailExtraction
-{
-    internal static class SystemExtension
-    {
-        #region IntPtr
-
-        /// <summary>
-        /// ゼロかどうかを示す値を取得します。
-        /// </summary>
-        /// <param name="self"><see cref="System.IntPtr"/> のインスタンス。</param>
-        /// <returns>ゼロの場合はtrue。それ以外の場合はfalse。</returns>
-        public static bool IsZero(this IntPtr self)
+        public byte[] GetMIDIMessage()
         {
-            return self == IntPtr.Zero;
-        }
+            if (MIDIInDevice.IsZero())
+            {
+                throw new MIDIIOException("MIDIデバイスが開かれていません。");
+            }
 
-        #endregion IntPtr
+            //バッファサイズ
+            int messageSize = 256;
+            //メモリ確保
+            IntPtr midiMessagePtr = Marshal.AllocCoTaskMem(messageSize);
+            try
+            {
+                //C言語関数呼び出し
+                int messageNum = MIDIIn_GetMIDIMessage(MIDIInDevice, midiMessagePtr, messageSize);
+                //コピー先配列
+                byte[] midiMessage = new byte[messageNum];
+                //MIDIメッセージ取得できたら
+                if (messageNum > 0)
+                {
+                    //配列にコピー
+                    Marshal.Copy(midiMessagePtr, midiMessage, 0, messageNum);
+                }
+                return midiMessage;
+            }
+            finally
+            {
+                //メモリ解放
+                Marshal.FreeCoTaskMem(midiMessagePtr);
+            }
+        }
     }
 }
