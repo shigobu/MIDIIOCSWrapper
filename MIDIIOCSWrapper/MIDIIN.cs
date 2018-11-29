@@ -283,10 +283,18 @@ namespace MIDIIOCSWrapper
 
             //バッファサイズ
             int messageSize = 256;
-            //メモリ確保
-            IntPtr midiMessagePtr = Marshal.AllocCoTaskMem(messageSize);
+            IntPtr midiMessagePtr = IntPtr.Zero;
             try
             {
+                //メモリ確保が必ず実行され、midiMessagePtr変数へ必ず代入されるための呪文
+                System.Runtime.CompilerServices.RuntimeHelpers.PrepareConstrainedRegions();
+                try { }
+                finally
+                {
+                    //メモリ確保
+                    midiMessagePtr = Marshal.AllocCoTaskMem(messageSize);
+                }
+
                 //C言語関数呼び出し
                 int messageNum = MIDIIn_GetMIDIMessage(MIDIInDevice, midiMessagePtr, messageSize);
                 //コピー先配列
@@ -298,11 +306,14 @@ namespace MIDIIOCSWrapper
                     Marshal.Copy(midiMessagePtr, midiMessage, 0, messageNum);
                 }
                 return midiMessage;
+
             }
             finally
             {
-                //メモリ解放
-                Marshal.FreeCoTaskMem(midiMessagePtr);
+                if (midiMessagePtr != IntPtr.Zero)
+                {
+                    Marshal.FreeCoTaskMem(midiMessagePtr);
+                }
             }
         }
     }
