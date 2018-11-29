@@ -35,9 +35,8 @@ namespace テストアプリ
 
             string InDeviceName = MIDIIN.GetDeviceName(InSelect);
 
-            // MIDI入力デバイスを開く:
-            MIDIIN midiIn = new MIDIIN(InDeviceName);
-            try
+            // MIDI入力デバイスを開く
+            using(MIDIIN midiIn = new MIDIIN(InDeviceName))
             {
                 Console.WriteLine("MIDI入力デバイス「{0:s}」を開きました", InDeviceName);
 
@@ -63,11 +62,6 @@ namespace テストアプリ
                         System.Threading.Thread.Sleep(1);
                     }
                 }
-
-            }
-            finally
-            {
-                midiIn.Close();
             }
         }
     }
