@@ -153,6 +153,35 @@ namespace MIDIIOCSWrapper
 
         #endregion DLLインポート
 
+        #region プロパティ
+
+        /// <summary>
+        /// このMIDIデバイスの名前を取得します。
+        /// </summary>
+        public string DeviseName
+        {
+            get
+            {
+                if (!MIDIInDevice.IsZero())
+                {
+                    int capacity = 32;
+                    StringBuilder sb = new StringBuilder(capacity);
+                    int resval = MIDIIn_GetThisDeviceName(MIDIInDevice, sb, capacity);
+                    if (resval == 0)
+                    {
+                        throw new MIDIIOException("MIDIデバイスの名前を取得できませんでした");
+                    }
+                    return sb.ToString();
+                }
+                else
+                {
+                    throw new InvalidOperationException("MIDIデバイスが開かれていません");
+                }
+            }
+        }
+
+        #endregion プロパティ
+
         /// <summary>
         /// 指定の名前のMIDIデバイスを開きオブジェクトを初期化します。
         /// </summary>
