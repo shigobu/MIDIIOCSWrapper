@@ -222,7 +222,7 @@ namespace MIDIIOCSWrapper
             int res = MIDIIn_GetDeviceName(index, deviceName, deviceName.Capacity);
             if (res == 0)
             {
-                throw new MIDIIOException("MIDI入力デバイスの取得に失敗しました。");
+                throw new MIDIIOException("MIDI入力デバイスの名前取得に失敗しました。");
             }
             return deviceName.ToString();
         }
