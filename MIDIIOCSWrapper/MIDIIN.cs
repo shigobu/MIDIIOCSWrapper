@@ -132,7 +132,7 @@ namespace MIDIIOCSWrapper
         /// <param name="lLen">バッファの長さ[バイト]かつ取得するMIDIメッセージの最大バイト数</param>
         /// <returns>実際に取得したMIDIメッセージのバイト数</returns>
         [DllImport("MIDIIO.dll")]
-        private static extern int MIDIIn_GetMIDIMessage(IntPtr pMIDIIn, ref IntPtr pMessage, int lLen);
+        private static extern int MIDIIn_GetMIDIMessage(IntPtr pMIDIIn, IntPtr pMessage, int lLen);
 
         /// <summary>
         /// このMIDI入力デバイスの名前を調べる。
@@ -325,7 +325,7 @@ namespace MIDIIOCSWrapper
                 }
 
                 //C言語関数呼び出し
-                int messageNum = MIDIIn_GetMIDIMessage(MIDIInDevice, ref midiMessagePtr, messageSize);
+                int messageNum = MIDIIn_GetMIDIMessage(MIDIInDevice, midiMessagePtr, messageSize);
                 //コピー先配列
                 byte[] midiMessage = new byte[messageNum];
                 //MIDIメッセージ取得できたら
