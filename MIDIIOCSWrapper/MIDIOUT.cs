@@ -100,6 +100,44 @@ namespace MIDIIOCSWrapper
 		[DllImport("MIDIIO.dll")]
 		private static extern int MIDIOut_Reset(IntPtr pMIDIOut);
 
+		/// <summary>
+		/// MIDIメッセージをひとつ送信し、実際に送信したMIDIメッセージのバイト数を返す。
+		/// この関数は、通常のMIDIチャンネルメッセージのほか、
+		/// システムエクスクルーシヴメッセージ・システムリアルタイムメッセージをも送信することができる。
+		/// 一度に送信できるMIDIメッセージのバイト数、すなわちlLenの最大値は256である。
+		/// </summary>
+		/// <param name="pMIDIOut">MIDI出力デバイスへのポインタ</param>
+		/// <param name="pMessage">送信するMIDIメッセージを格納するバッファへのポインタ</param>
+		/// <param name="lLen">送信するMIDIメッセージのバイト数</param>
+		/// <returns>実際に送信したMIDIメッセージのバイト数</returns>
+		[DllImport("MIDIIO.dll")]
+		private static extern int MIDIOut_PutMIDIMessage(IntPtr pMIDIOut, byte[] pMessage, int lLen);
+
+		/// <summary>
+		/// MIDIメッセージを1バイト送信し、1を返す。
+		/// なお、この関数は危険なので、ほとんど使ってはならない。
+		/// なぜなら、MIDIメッセージを中途半端に区切って送信することによって、
+		/// MIDIメッセージとMIDIメッセージの境界がわからなくなってしまうからである。
+		/// </summary>
+		/// <param name="pMIDIOut">MIDI出力デバイスへのポインタ</param>
+		/// <param name="ucByte">送信するデータ</param>
+		/// <returns>実際に送信したMIDIメッセージのバイト数</returns>
+		[DllImport("MIDIIO.dll")]
+		private static extern int MIDIOut_PutByte(IntPtr pMIDIOut, byte ucByte);
+
+		/// <summary>
+		/// MIDIメッセージを指定されたバイト数送信し、実際に送信したバイト数を返す。
+		/// なお、この関数は危険なので、ほとんど使ってはならない。
+		/// なぜなら、MIDIメッセージを中途半端に区切って送信することによって、
+		/// MIDIメッセージとMIDIメッセージの境界がわからなくなってしまうからである。
+		/// </summary>
+		/// <param name="pMIDIOut">MIDI出力デバイスへのポインタ</param>
+		/// <param name="pBuf">送信するデータを格納するバッファへのポインタ</param>
+		/// <param name="lLen">バッファの長さかつ送信する長さ[バイト]</param>
+		/// <returns>実際に送信したMIDIメッセージのバイト数</returns>
+		[DllImport("MIDIIO.dll")]
+		private static extern int MIDIOut_PutBytes(IntPtr pMIDIOut, byte[] pBuf, int lLen);
+
 		#endregion
 	}
 }
