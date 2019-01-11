@@ -266,7 +266,7 @@ namespace MIDIIOCSWrapper
         /// <summary>
         /// MIDI入力デバイスを閉じます。
         /// </summary>
-        public void Close()
+        private void Close()
         {
             //開かれていない場合、何もしない。
             if (MIDIInDevice.IsZero())
