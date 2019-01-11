@@ -138,6 +138,70 @@ namespace MIDIIOCSWrapper
 		[DllImport("MIDIIO.dll")]
 		private static extern int MIDIOut_PutBytes(IntPtr pMIDIOut, byte[] pBuf, int lLen);
 
-		#endregion
-	}
+        #endregion
+
+        /// <summary>
+        /// 指定の名前のMIDIデバイスを開きオブジェクトを初期化します。
+        /// </summary>
+        public MIDIOUT(string deviceName)
+        {
+            Open(deviceName);
+        }
+
+        /// <summary>
+        /// MIDI出力デバイスオブジェクト
+        /// </summary>
+        IntPtr MIDIOutDevice = IntPtr.Zero;
+
+        /// <summary>
+        /// インストールされているMIDI出力デバイスの数を調べる。MIDI出力デバイスが何もインストールされていない場合0を返す。
+        /// </summary>
+        /// <returns>インストールされているMIDI出力デバイスの数</returns>
+        public static int GetDeviceNum()
+        {
+            return MIDIOut_GetDeviceNum();
+        }
+
+        /// <summary>
+        /// MIDI出力デバイスの名前を調べる。
+        /// indexには0以上、MIDIIn_GetDeviceNumで得られた値-1以下の値を指定すれば、
+        /// 正常にMIDI出力デバイスの名前を取得することができる。
+        /// その他のインデックスを指定した場合、この関数は失敗し、例外を投げる。
+        /// </summary>
+        /// <param name="index"></param>
+        /// <returns>デバイス名</returns>
+        public static string GetDeviceName(int index)
+        {
+            if (index >= GetDeviceNum())
+            {
+                throw new IndexOutOfRangeException();
+            }
+            StringBuilder deviceName = new StringBuilder(32);
+            int res = MIDIOut_GetDeviceName(index, deviceName, deviceName.Capacity);
+            if (res == 0)
+            {
+                throw new MIDIIOException("MIDI出力デバイスの名前取得に失敗しました。");
+            }
+            return deviceName.ToString();
+        }
+
+        /// <summary>
+        /// MIDI出力デバイスを開きます。
+        /// </summary>
+        /// <param name="deviceName">MIDI出力デバイス名</param>
+        private void Open(string deviceName)
+        {
+            if (!MIDIOutDevice.IsZero())
+            {
+                throw new MIDIIOException("MIDIデバイスはすでに開かれています。");
+            }
+
+            MIDIOutDevice = MIDIOut_Open(deviceName);
+            if (MIDIOutDevice.IsZero())
+            {
+                throw new MIDIIOException("MIDIデバイスが開けませんでした。\n他のアプリケーションを終了してから再試行してください。");
+            }
+        }
+
+    }
 }
