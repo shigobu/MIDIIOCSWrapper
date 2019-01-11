@@ -193,7 +193,7 @@ namespace MIDIIOCSWrapper
         /// <summary>
         /// MIDI入力デバイスオブジェクト
         /// </summary>
-        private IntPtr MIDIInDevice;
+        private IntPtr MIDIInDevice = IntPtr.Zero;
 
         /// <summary>
         /// インストールされているMIDI入力デバイスの数を調べる。MIDI入力デバイスが何もインストールされていない場合0を返す。
