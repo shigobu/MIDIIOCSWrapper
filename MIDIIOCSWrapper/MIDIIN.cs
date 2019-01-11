@@ -231,7 +231,7 @@ namespace MIDIIOCSWrapper
         /// MIDI入力デバイスを開きます。
         /// </summary>
         /// <param name="deviceName">MIDI入力デバイス名</param>
-        public void Open(string deviceName)
+        private void Open(string deviceName)
         {
             if (!MIDIInDevice.IsZero())
             {
