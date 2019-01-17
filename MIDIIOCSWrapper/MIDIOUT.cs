@@ -138,14 +138,21 @@ namespace MIDIIOCSWrapper
 		[DllImport("MIDIIO.dll")]
 		private static extern int MIDIOut_PutBytes(IntPtr pMIDIOut, byte[] pBuf, int lLen);
 
-        #endregion
+		#endregion
 
-        /// <summary>
-        /// 指定の名前のMIDIデバイスを開きオブジェクトを初期化します。
-        /// </summary>
-        public MIDIOUT(string deviceName)
+		#region プロパティ
+
+		public string DeviceName{ get; }
+
+		#endregion
+
+		/// <summary>
+		/// 指定の名前のMIDIデバイスを開きオブジェクトを初期化します。
+		/// </summary>
+		public MIDIOUT(string deviceName)
         {
             Open(deviceName);
+			DeviceName = deviceName;
         }
 
         /// <summary>
