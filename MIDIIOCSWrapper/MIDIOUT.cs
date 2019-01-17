@@ -267,5 +267,20 @@ namespace MIDIIOCSWrapper
             }
         }
 
+        /// <summary>
+        /// MIDIメッセージをひとつ送信しします。
+		/// この関数は、通常のMIDIチャンネルメッセージのほか、
+		/// システムエクスクルーシヴメッセージ・システムリアルタイムメッセージをも送信することができる。
+		/// 一度に送信できるMIDIメッセージのバイト数、すなわちlLenの最大値は256である。
+        /// </summary>
+        /// <param name="message">MIDIメッセージ</param>
+        public void PutMIDIMessage(byte[] message)
+        {
+            if (message.Length > 256)
+            {
+                throw new MIDIIOException("MIDIメッセージの最大バイト数は256バイトです。");
+            }
+            MIDIOut_PutMIDIMessage(MIDIOutDevice, message, message.Length);
+        }
     }
 }

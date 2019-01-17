@@ -303,6 +303,10 @@ namespace MIDIIOCSWrapper
             }
         }
 
+        /// <summary>
+        /// MIDIメッセージをひとつ取得します。
+        /// </summary>
+        /// <returns>MIDIメッセージ</returns>
         public byte[] GetMIDIMessage()
         {
             if (MIDIInDevice.IsZero())
