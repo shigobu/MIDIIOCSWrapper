@@ -203,5 +203,22 @@ namespace MIDIIOCSWrapper
             }
         }
 
+        /// <summary>
+        /// 現在使用しているMIDI出力デバイスを閉じ、新しいMIDI出力デバイスを開きます。
+        /// </summary>
+        /// <param name="deviceName">MIDI出力デバイス名</param>
+        public void Reopen(string deviceName)
+        {
+            if (MIDIOutDevice.IsZero())
+            {
+                throw new MIDIIOException("MIDIデバイスが開かれていません。");
+            }
+
+            MIDIOutDevice = MIDIOut_Reopen(MIDIOutDevice, deviceName);
+            if (MIDIOutDevice.IsZero())
+            {
+                throw new MIDIIOException("MIDIデバイスが閉じられなかったか、開けませんでした。");
+            }
+        }
     }
 }
