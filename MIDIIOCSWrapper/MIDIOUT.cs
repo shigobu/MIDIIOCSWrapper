@@ -227,5 +227,45 @@ namespace MIDIIOCSWrapper
                 throw new MIDIIOException("MIDIデバイスが閉じられなかったか、開けませんでした。");
             }
         }
+
+        /// <summary>
+        /// MIDI出力デバイスを閉じます。
+        /// </summary>
+        private void Close()
+        {
+            //開かれていない場合、何もしない。
+            if (MIDIOutDevice.IsZero())
+            {
+                return;
+            }
+
+            int res = MIDIOut_Close(MIDIOutDevice);
+            MIDIOutDevice = IntPtr.Zero;
+            if (res == 0)
+            {
+                throw new MIDIIOException("MIDIデバイスのクローズに失敗しました。このデバイスはもはや使用するべきでない。");
+            }
+        }
+
+        /// <summary>
+        /// MIDI出力デバイスをリセットし、MIDI出力デバイスを開いた直後の状態に初期化する。
+        /// 具体的には、出力バッファにたまっているMIDIメッセージをすべて削除し、
+        /// 読み込み位置と書き込み位置を0に初期化する。また、すべてのチャンネルの音を消音する。
+        /// </summary>
+        public void Reset()
+        {
+            //開かれていない場合、何もしない。
+            if (MIDIOutDevice.IsZero())
+            {
+                return;
+            }
+
+            int res = MIDIOut_Reset(MIDIOutDevice);
+            if (res == 0)
+            {
+                throw new MIDIIOException("MIDIデバイスのリセットに失敗しました。");
+            }
+        }
+
     }
 }
