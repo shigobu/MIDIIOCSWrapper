@@ -282,5 +282,29 @@ namespace MIDIIOCSWrapper
             }
             MIDIOut_PutMIDIMessage(MIDIOutDevice, message, message.Length);
         }
+
+        /// <summary>
+        /// MIDIメッセージを1バイト送信する。
+		/// なお、この関数は危険なので、ほとんど使ってはならない。
+		/// なぜなら、MIDIメッセージを中途半端に区切って送信することによって、
+		/// MIDIメッセージとMIDIメッセージの境界がわからなくなってしまうからである。
+        /// </summary>
+        /// <param name="byteData">送信するデータ</param>
+        public void PutByte(byte byteData)
+        {
+            MIDIOut_PutByte(MIDIOutDevice, byteData);
+        }
+
+        /// <summary>
+        /// MIDIメッセージを指定されたバイト数送信する。
+		/// なお、この関数は危険なので、ほとんど使ってはならない。
+		/// なぜなら、MIDIメッセージを中途半端に区切って送信することによって、
+		/// MIDIメッセージとMIDIメッセージの境界がわからなくなってしまうからである。
+        /// </summary>
+        /// <param name="bytes"></param>
+        public void PutBytes(byte[] bytes)
+        {
+            MIDIOut_PutBytes(MIDIOutDevice, bytes, bytes.Length);
+        }
     }
 }
