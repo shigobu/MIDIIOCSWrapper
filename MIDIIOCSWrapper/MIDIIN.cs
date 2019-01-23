@@ -141,27 +141,7 @@ namespace MIDIIOCSWrapper
         /// <summary>
         /// このMIDIデバイスの名前を取得します。
         /// </summary>
-        public string DeviseName
-        {
-            get
-            {
-                if (!MIDIInDevice.IsZero())
-                {
-                    int capacity = 32;
-                    StringBuilder sb = new StringBuilder(capacity);
-                    int resval = MIDIIn_GetThisDeviceName(MIDIInDevice, sb, capacity);
-                    if (resval == 0)
-                    {
-                        throw new MIDIIOException("MIDIデバイスの名前を取得できませんでした");
-                    }
-                    return sb.ToString();
-                }
-                else
-                {
-                    throw new InvalidOperationException("MIDIデバイスが開かれていません");
-                }
-            }
-        }
+        public string DeviseName { get; }
 
         #endregion プロパティ
 
@@ -171,6 +151,7 @@ namespace MIDIIOCSWrapper
         public MIDIIN(string deviceName)
         {
             Open(deviceName);
+            DeviseName = deviceName;
         }
 
         /// <summary>
