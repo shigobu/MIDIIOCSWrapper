@@ -4,23 +4,6 @@ using System.Text;
 
 namespace MIDIIOCSWrapper
 {
-    // MIDI構造体
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct MIDI
-    {
-        public IntPtr m_pDeviceHandle;
-        public IntPtr m_pDeviceName;
-        public int m_lMode;
-        public IntPtr m_pSysxHeader;
-        public int m_bStarting;
-        public IntPtr m_pBuf;
-        public int m_lBufSize;
-        public int m_lReadPosition;
-        public int m_lWritePosition;
-        public int m_bBufLocked;
-        public byte m_byRunningStatus;
-    }
-
     public class MIDIIN : IDisposable
     {
         #region DLLインポート
