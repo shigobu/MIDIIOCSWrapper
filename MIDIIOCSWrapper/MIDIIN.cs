@@ -343,6 +343,9 @@ namespace MIDIIOCSWrapper
         }
 
         // このコードは、破棄可能なパターンを正しく実装できるように追加されました。
+        /// <summary>
+        /// Closeメソッドを呼び、MIDIデバイスを閉じます。
+        /// </summary>
         public void Dispose()
         {
             // このコードを変更しないでください。クリーンアップ コードを上の Dispose(bool disposing) に記述します。
