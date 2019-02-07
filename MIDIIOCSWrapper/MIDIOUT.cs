@@ -301,7 +301,7 @@ namespace MIDIIOCSWrapper
 		/// なぜなら、MIDIメッセージを中途半端に区切って送信することによって、
 		/// MIDIメッセージとMIDIメッセージの境界がわからなくなってしまうからである。
         /// </summary>
-        /// <param name="bytes"></param>
+        /// <param name="bytes">送信するMIDIデータのバイト配列</param>
         public void PutBytes(byte[] bytes)
         {
             MIDIOut_PutBytes(MIDIOutDevice, bytes, bytes.Length);
