@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace MIDIIOCSWrapper
 {
@@ -145,6 +147,8 @@ namespace MIDIIOCSWrapper
 
         #endregion プロパティ
 
+        #region コンストラクタ
+
         /// <summary>
         /// 指定の名前のMIDIデバイスを開きオブジェクトを初期化します。
         /// </summary>
@@ -154,10 +158,18 @@ namespace MIDIIOCSWrapper
             DeviseName = deviceName;
         }
 
+        #endregion
+
+        #region フィールド変数
+
         /// <summary>
         /// MIDI入力デバイスオブジェクト
         /// </summary>
         private IntPtr MIDIInDevice = IntPtr.Zero;
+
+        #endregion
+
+        #region メソッド
 
         /// <summary>
         /// インストールされているMIDI入力デバイスの数を調べる。MIDI入力デバイスが何もインストールされていない場合0を返す。
@@ -314,6 +326,77 @@ namespace MIDIIOCSWrapper
             }
         }
 
+        #endregion //メソッド
+
+        #region イベント
+
+        //イベントハンドラとか
+        public delegate void MidiMessageReceivedEventHandler(object sender, MidiMessageReceivedEventArgs e);
+        /// <summary>
+        /// MIDIメッセージを受信したときに発生します。
+        /// </summary>
+        public event MidiMessageReceivedEventHandler MidiMessageReceived;
+
+        //キャンセルトークンとか
+        private CancellationTokenSource tokenSource = null;
+        private CancellationToken token;
+
+        //MIDIループのタスクオブジェクト
+        Task MIDILoopTask = null;
+
+        /// <summary>
+        /// MIDIメッセージのリスニングを開始します
+        /// </summary>
+        public void StartListening()
+        {
+            tokenSource = new CancellationTokenSource();
+            token = tokenSource.Token;
+            MIDILoopTask = Task.Run(new Action(MIDILoadLoop), token);
+        }
+
+        /// <summary>
+        /// MIDIメッセージのリスニングを終了します
+        /// </summary>
+        public async void StopListening()
+        {
+            if (tokenSource != null)
+            {
+                tokenSource.Cancel();
+                try
+                {
+                    await MIDILoopTask;
+                }
+                finally
+                {
+                    tokenSource.Dispose();
+                    tokenSource = null;
+                }
+            }
+        }
+
+        /// <summary>
+        /// MIDIメッセージを取得するタスク
+        /// </summary>
+        private void MIDILoadLoop()
+        {
+            while (!token.IsCancellationRequested)
+            {
+                byte[] message = GetMIDIMessage();
+                if (message.Length == 0)
+                {
+                    //何もしない
+                }
+                else
+                {
+                    //イベント発動
+                    MidiMessageReceived?.Invoke(this, new MidiMessageReceivedEventArgs(message));
+                }
+                Thread.Sleep(1);
+            }
+        }
+
+        #endregion //イベント
+
         #region IDisposable Support
         private bool disposedValue = false; // 重複する呼び出しを検出するには
 
@@ -323,14 +406,16 @@ namespace MIDIIOCSWrapper
             {
                 if (disposing)
                 {
-                    // TODO: マネージ状態を破棄します (マネージ オブジェクト)。
+                    // TODO: マネージ状態を破棄します (マネージ オブジェクト)。                    
+                    //リスニングの終了
+                    StopListening();
                 }
 
                 // TODO: アンマネージ リソース (アンマネージ オブジェクト) を解放し、下のファイナライザーをオーバーライドします。
                 // TODO: 大きなフィールドを null に設定します。
                 //MIDIデバイスを閉じる
                 this.Close();
-
+                
                 disposedValue = true;
             }
         }
