@@ -210,110 +210,143 @@ namespace MIDIIOCSWrapper
             }
         }
 
-		/// <summary>
-		/// MIDIデバイスを開き直します。
-		/// </summary>
-		/// <param name="deviceName">新しく開くMIDI出力デバイス名</param>
-		public void Reopen (string deviceName)
-		{
-			if (MIDIOutDevice.IsZero())
-			{
-				throw new MIDIIOException("MIDIデバイスが開かれていません。");
-			}
+        /// <summary>
+        /// 現在使用しているMIDI出力デバイスを閉じ、新しいMIDI出力デバイスを開きます。
+        /// </summary>
+        /// <param name="deviceName">MIDI出力デバイス名</param>
+        public void Reopen(string deviceName)
+        {
+            if (MIDIOutDevice.IsZero())
+            {
+                throw new MIDIIOException("MIDIデバイスが開かれていません。");
+            }
 
-			MIDIOutDevice = MIDIOut_Reopen(MIDIOutDevice, deviceName);
-			if (MIDIOutDevice.IsZero())
-			{
-				throw new MIDIIOException("MIDIデバイスを閉じるか、開くが失敗しました。");
-			}
-		}
+            MIDIOutDevice = MIDIOut_Reopen(MIDIOutDevice, deviceName);
+            if (MIDIOutDevice.IsZero())
+            {
+                throw new MIDIIOException("MIDIデバイスが閉じられなかったか、開けませんでした。");
+            }
+        }
 
-		/// <summary>
-		/// MIDIデバイスを閉じます。
-		/// </summary>
-		private void Close()
-		{
-			if (MIDIOutDevice.IsZero())
-			{
-				throw new MIDIIOException("MIDIデバイスが開かれていません。");
-			}
+        /// <summary>
+        /// MIDI出力デバイスを閉じます。
+        /// </summary>
+        private void Close()
+        {
+            //開かれていない場合、何もしない。
+            if (MIDIOutDevice.IsZero())
+            {
+                return;
+            }
 
-			int retVal = MIDIOut_Close(MIDIOutDevice);
-			if (retVal == 0)
-			{
-				throw new MIDIIOException("MIDIデバイスのクローズに失敗しました。このデバイスはもはや使用するべきでない。");
-			}
-		}
+            int res = MIDIOut_Close(MIDIOutDevice);
+            MIDIOutDevice = IntPtr.Zero;
+            if (res == 0)
+            {
+                throw new MIDIIOException("MIDIデバイスのクローズに失敗しました。このデバイスはもはや使用するべきでない。");
+            }
+        }
 
-		/// <summary>
-		/// MIDIデバイスをリセットします。
-		/// </summary>
-		public void Reset()
-		{
-			if (MIDIOutDevice.IsZero())
-			{
-				throw new MIDIIOException("MIDIデバイスが開かれていません。");
-			}
+        /// <summary>
+        /// MIDI出力デバイスをリセットし、MIDI出力デバイスを開いた直後の状態に初期化する。
+        /// 具体的には、出力バッファにたまっているMIDIメッセージをすべて削除し、
+        /// 読み込み位置と書き込み位置を0に初期化する。また、すべてのチャンネルの音を消音する。
+        /// </summary>
+        public void Reset()
+        {
+            //開かれていない場合、何もしない。
+            if (MIDIOutDevice.IsZero())
+            {
+                return;
+            }
 
-			MIDIOut_Reset(MIDIOutDevice);
-		}
+            int res = MIDIOut_Reset(MIDIOutDevice);
+            if (res == 0)
+            {
+                throw new MIDIIOException("MIDIデバイスのリセットに失敗しました。");
+            }
+        }
 
-		/// <summary>
-		/// MIDIメッセージを送信します。
-		/// メッセージの最大長は256バイトです。
-		/// </summary>
-		/// <param name="message">送信するMIDIメッセージ</param>
-		public void PutMIDIMessage(byte[] message)
-		{
-			if (MIDIOutDevice.IsZero())
-			{
-				throw new MIDIIOException("MIDIデバイスが開かれていません。");
-			}
+        /// <summary>
+        /// MIDIメッセージをひとつ送信しします。
+		/// この関数は、通常のMIDIチャンネルメッセージのほか、
+		/// システムエクスクルーシヴメッセージ・システムリアルタイムメッセージをも送信することができる。
+		/// 一度に送信できるMIDIメッセージのバイト数、すなわちlLenの最大値は256である。
+        /// </summary>
+        /// <param name="message">MIDIメッセージ</param>
+        public void PutMIDIMessage(byte[] message)
+        {
+            if (message.Length > 256)
+            {
+                throw new MIDIIOException("MIDIメッセージの最大バイト数は256バイトです。");
+            }
+            MIDIOut_PutMIDIMessage(MIDIOutDevice, message, message.Length);
+        }
 
-			if (message.Length > 256)
-			{
-				throw new MIDIIOException("送信できるMIDIメッセージの長さは256バイトまでです。");
-			}
+        /// <summary>
+        /// MIDIメッセージを1バイト送信する。
+		/// なお、この関数は危険なので、ほとんど使ってはならない。
+		/// なぜなら、MIDIメッセージを中途半端に区切って送信することによって、
+		/// MIDIメッセージとMIDIメッセージの境界がわからなくなってしまうからである。
+        /// </summary>
+        /// <param name="byteData">送信するデータ</param>
+        public void PutByte(byte byteData)
+        {
+            MIDIOut_PutByte(MIDIOutDevice, byteData);
+        }
 
-			MIDIOut_PutMIDIMessage(MIDIOutDevice, message, message.Length);
-		}
+        /// <summary>
+        /// MIDIメッセージを指定されたバイト数送信する。
+		/// なお、この関数は危険なので、ほとんど使ってはならない。
+		/// なぜなら、MIDIメッセージを中途半端に区切って送信することによって、
+		/// MIDIメッセージとMIDIメッセージの境界がわからなくなってしまうからである。
+        /// </summary>
+        /// <param name="bytes">送信するMIDIデータのバイト配列</param>
+        public void PutBytes(byte[] bytes)
+        {
+            MIDIOut_PutBytes(MIDIOutDevice, bytes, bytes.Length);
+        }
 
-		#region IDisposable Support
-		private bool disposedValue = false; // 重複する呼び出しを検出するには
+        #region IDisposable Support
+        private bool disposedValue = false; // 重複する呼び出しを検出するには
 
-		protected virtual void Dispose(bool disposing)
-		{
-			if (!disposedValue)
-			{
-				if (disposing)
-				{
-					// TODO: マネージド状態を破棄します (マネージド オブジェクト)。
-				}
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    // TODO: マネージ状態を破棄します (マネージ オブジェクト)。
+                }
 
-				// TODO: アンマネージド リソース (アンマネージド オブジェクト) を解放し、下のファイナライザーをオーバーライドします。
-				// TODO: 大きなフィールドを null に設定します。
-				this.Close();
-				MIDIOutDevice = IntPtr.Zero;
+                // TODO: アンマネージ リソース (アンマネージ オブジェクト) を解放し、下のファイナライザーをオーバーライドします。
+                // TODO: 大きなフィールドを null に設定します。
+                //MIDIデバイスを閉じる
+                this.Close();
 
-				disposedValue = true;
-			}
-		}
+                disposedValue = true;
+            }
+        }
 
-		// TODO: 上の Dispose(bool disposing) にアンマネージド リソースを解放するコードが含まれる場合にのみ、ファイナライザーをオーバーライドします。
-		~MIDIOUT()
-		{
-			// このコードを変更しないでください。クリーンアップ コードを上の Dispose(bool disposing) に記述します。
-			Dispose(false);
-		}
+        // TODO: 上の Dispose(bool disposing) にアンマネージ リソースを解放するコードが含まれる場合にのみ、ファイナライザーをオーバーライドします。
+        ~MIDIOUT()
+        {
+            // このコードを変更しないでください。クリーンアップ コードを上の Dispose(bool disposing) に記述します。
+            Dispose(false);
+        }
 
-		// このコードは、破棄可能なパターンを正しく実装できるように追加されました。
-		public void Dispose()
-		{
-			// このコードを変更しないでください。クリーンアップ コードを上の Dispose(bool disposing) に記述します。
-			Dispose(true);
-			// TODO: 上のファイナライザーがオーバーライドされる場合は、次の行のコメントを解除してください。
-			GC.SuppressFinalize(this);
-		}
-		#endregion
-	}
+        // このコードは、破棄可能なパターンを正しく実装できるように追加されました。
+        /// <summary>
+        /// Closeメソッドを呼び、MIDIデバイスを閉じます。
+        /// </summary>
+        public void Dispose()
+        {
+            // このコードを変更しないでください。クリーンアップ コードを上の Dispose(bool disposing) に記述します。
+            Dispose(true);
+            // TODO: 上のファイナライザーがオーバーライドされる場合は、次の行のコメントを解除してください。
+            GC.SuppressFinalize(this);
+        }
+        #endregion
+
+    }
 }

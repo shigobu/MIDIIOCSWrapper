@@ -79,6 +79,7 @@
   <ItemGroup>
     <Compile Include="IntPtrExtension.cs" />
     <Compile Include="MIDIIN.cs" />
+    <Compile Include="MidiMessageReceivedEventArgs.cs" />
     <Compile Include="MIDIIOException.cs" />
     <Compile Include="MIDIOUT.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

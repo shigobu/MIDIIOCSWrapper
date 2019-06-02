@@ -1,26 +1,11 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace MIDIIOCSWrapper
 {
-    // MIDI構造体
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct MIDI
-    {
-        public IntPtr m_pDeviceHandle;
-        public IntPtr m_pDeviceName;
-        public int m_lMode;
-        public IntPtr m_pSysxHeader;
-        public int m_bStarting;
-        public IntPtr m_pBuf;
-        public int m_lBufSize;
-        public int m_lReadPosition;
-        public int m_lWritePosition;
-        public int m_bBufLocked;
-        public byte m_byRunningStatus;
-    }
-
     public class MIDIIN : IDisposable
     {
         #region DLLインポート
@@ -158,29 +143,11 @@ namespace MIDIIOCSWrapper
         /// <summary>
         /// このMIDIデバイスの名前を取得します。
         /// </summary>
-        public string DeviseName
-        {
-            get
-            {
-                if (!MIDIInDevice.IsZero())
-                {
-                    int capacity = 32;
-                    StringBuilder sb = new StringBuilder(capacity);
-                    int resval = MIDIIn_GetThisDeviceName(MIDIInDevice, sb, capacity);
-                    if (resval == 0)
-                    {
-                        throw new MIDIIOException("MIDIデバイスの名前を取得できませんでした");
-                    }
-                    return sb.ToString();
-                }
-                else
-                {
-                    throw new InvalidOperationException("MIDIデバイスが開かれていません");
-                }
-            }
-        }
+        public string DeviseName { get; }
 
         #endregion プロパティ
+
+        #region コンストラクタ
 
         /// <summary>
         /// 指定の名前のMIDIデバイスを開きオブジェクトを初期化します。
@@ -188,12 +155,21 @@ namespace MIDIIOCSWrapper
         public MIDIIN(string deviceName)
         {
             Open(deviceName);
+            DeviseName = deviceName;
         }
+
+        #endregion
+
+        #region フィールド変数
 
         /// <summary>
         /// MIDI入力デバイスオブジェクト
         /// </summary>
         private IntPtr MIDIInDevice = IntPtr.Zero;
+
+        #endregion
+
+        #region メソッド
 
         /// <summary>
         /// インストールされているMIDI入力デバイスの数を調べる。MIDI入力デバイスが何もインストールされていない場合0を返す。
@@ -303,6 +279,10 @@ namespace MIDIIOCSWrapper
             }
         }
 
+        /// <summary>
+        /// MIDIメッセージをひとつ取得します。
+        /// </summary>
+        /// <returns>MIDIメッセージ</returns>
         public byte[] GetMIDIMessage()
         {
             if (MIDIInDevice.IsZero())
@@ -346,6 +326,77 @@ namespace MIDIIOCSWrapper
             }
         }
 
+        #endregion //メソッド
+
+        #region イベント
+
+        //イベントハンドラとか
+        public delegate void MidiMessageReceivedEventHandler(object sender, MidiMessageReceivedEventArgs e);
+        /// <summary>
+        /// MIDIメッセージを受信したときに発生します。
+        /// </summary>
+        public event MidiMessageReceivedEventHandler MidiMessageReceived;
+
+        //キャンセルトークンとか
+        private CancellationTokenSource tokenSource = null;
+        private CancellationToken token;
+
+        //MIDIループのタスクオブジェクト
+        Task MIDILoopTask = null;
+
+        /// <summary>
+        /// MIDIメッセージのリスニングを開始します
+        /// </summary>
+        public void StartListening()
+        {
+            tokenSource = new CancellationTokenSource();
+            token = tokenSource.Token;
+            MIDILoopTask = Task.Run(new Action(MIDILoadLoop), token);
+        }
+
+        /// <summary>
+        /// MIDIメッセージのリスニングを終了します
+        /// </summary>
+        public async void StopListening()
+        {
+            if (tokenSource != null)
+            {
+                tokenSource.Cancel();
+                try
+                {
+                    await MIDILoopTask;
+                }
+                finally
+                {
+                    tokenSource.Dispose();
+                    tokenSource = null;
+                }
+            }
+        }
+
+        /// <summary>
+        /// MIDIメッセージを取得するタスク
+        /// </summary>
+        private void MIDILoadLoop()
+        {
+            while (!token.IsCancellationRequested)
+            {
+                byte[] message = GetMIDIMessage();
+                if (message.Length == 0)
+                {
+                    //何もしない
+                }
+                else
+                {
+                    //イベント発動
+                    MidiMessageReceived?.Invoke(this, new MidiMessageReceivedEventArgs(message));
+                }
+                Thread.Sleep(1);
+            }
+        }
+
+        #endregion //イベント
+
         #region IDisposable Support
         private bool disposedValue = false; // 重複する呼び出しを検出するには
 
@@ -355,14 +406,16 @@ namespace MIDIIOCSWrapper
             {
                 if (disposing)
                 {
-                    // TODO: マネージ状態を破棄します (マネージ オブジェクト)。
+                    // TODO: マネージ状態を破棄します (マネージ オブジェクト)。                    
+                    //リスニングの終了
+                    StopListening();
                 }
 
                 // TODO: アンマネージ リソース (アンマネージ オブジェクト) を解放し、下のファイナライザーをオーバーライドします。
                 // TODO: 大きなフィールドを null に設定します。
                 //MIDIデバイスを閉じる
                 this.Close();
-
+                
                 disposedValue = true;
             }
         }
@@ -375,6 +428,9 @@ namespace MIDIIOCSWrapper
         }
 
         // このコードは、破棄可能なパターンを正しく実装できるように追加されました。
+        /// <summary>
+        /// Closeメソッドを呼び、MIDIデバイスを閉じます。
+        /// </summary>
         public void Dispose()
         {
             // このコードを変更しないでください。クリーンアップ コードを上の Dispose(bool disposing) に記述します。
