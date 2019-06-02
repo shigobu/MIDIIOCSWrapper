@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace MIDIIOCSWrapper
 {
-    class MIDIIOException : Exception
+    public class MIDIIOException : Exception
     {
         public MIDIIOException() : base()
         {
