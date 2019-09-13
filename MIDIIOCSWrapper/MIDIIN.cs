@@ -391,7 +391,6 @@ namespace MIDIIOCSWrapper
                     //イベント発動
                     MidiMessageReceived?.Invoke(this, new MidiMessageReceivedEventArgs(message));
                 }
-                Thread.Sleep(1);
             }
         }
 
