@@ -31,7 +31,7 @@ namespace MIDIIOCSWrapper
         /// <returns>
         /// 正常終了:MIDI入力デバイス名の文字数[文字]
         /// 異常終了:0
-        /// <returns>
+        /// </returns>
         [DllImport("MIDIIO.dll")]
         private static extern int MIDIIn_GetDeviceName(int Index, StringBuilder DeviceName, int Len);
 
