@@ -7,6 +7,9 @@ using System.Threading.Tasks;
 
 namespace MIDIIOCSWrapper
 {
+	/// <summary>
+	/// MIDI出力デバイス
+	/// </summary>
 	public class MIDIOUT : IDisposable
 	{
 		#region DLLインポート
@@ -142,6 +145,9 @@ namespace MIDIIOCSWrapper
 
 		#region プロパティ
 
+		/// <summary>
+		/// デバイス名
+		/// </summary>
 		public string DeviceName{ get; }
 
 		#endregion

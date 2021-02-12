@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 
 namespace MIDIIOCSWrapper
 {
+	/// <summary>
+	/// MIDI入力デバイス
+	/// </summary>
     public class MIDIIN : IDisposable
     {
         #region DLLインポート
